@@ -1,21 +1,22 @@
-# Byte-compiled / optimized / DLL files
+# Python cache
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 
-# Virtual environment
+# Virtual environments
 venv/
-env/
+.env/
+.venv/
 
-# Allure
+# Allure test reports
 allure-report/
 target/
 
-# IDEs
+# IDE settings
 .idea/
 .vscode/
 
-# OS files
+# macOS & Windows system files
 .DS_Store
 Thumbs.db
