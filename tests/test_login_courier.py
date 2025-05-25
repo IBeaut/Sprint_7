@@ -1,30 +1,37 @@
-import pytest
 import requests
-from utils.helpers import register_new_courier_and_return_login_password
+import allure
+from utils.helpers import generate_user_data, register_courier
 
 BASE_URL = "https://qa-scooter.praktikum-services.ru"
 
+@allure.suite("Логин курьера")
+class TestCourierLogin:
 
-def test_login_success():
-    login, password, _ = register_new_courier_and_return_login_password()
-    payload = {"login": login, "password": password}
-    response = requests.post(f"{BASE_URL}/api/v1/courier/login", data=payload)
-    assert response.status_code == 200
-    assert "id" in response.json()
+    @allure.title("Позитивный тест: логин успешен")
+    def test_login_success(self):
+        user = generate_user_data()
+        register_courier(user)
+        with allure.step("Попытка логина с валидными данными"):
+            response = requests.post(f"{BASE_URL}/api/v1/courier/login", data={
+                "login": user["login"],
+                "password": user["password"]
+            })
+        assert response.status_code == 200
+        assert "id" in response.json()
 
+    @allure.title("Негативный тест: отсутствие пароля")
+    def test_login_missing_password(self):
+        user = generate_user_data()
+        register_courier(user)
+        with allure.step("Попытка логина без пароля"):
+            response = requests.post(f"{BASE_URL}/api/v1/courier/login", data={"login": user["login"]})
+        assert response.status_code == 400
 
-def test_login_missing_password():
-    login, _, _ = register_new_courier_and_return_login_password()
-    response = requests.post(f"{BASE_URL}/api/v1/courier/login", data={"login": login})
-
-    # Обработка временного сбоя сервера
-    if response.status_code == 504:
-        pytest.skip("Сервер временно недоступен (504 Gateway Timeout)")
-
-    assert response.status_code == 400
-
-
-def test_login_invalid_credentials():
-    payload = {"login": "fakeuser", "password": "fakepass"}
-    response = requests.post(f"{BASE_URL}/api/v1/courier/login", data=payload)
-    assert response.status_code == 404
+    @allure.title("Негативный тест: несуществующий пользователь")
+    def test_login_invalid_credentials(self):
+        with allure.step("Попытка логина с фейковыми данными"):
+            response = requests.post(f"{BASE_URL}/api/v1/courier/login", data={
+                "login": "nonexistent",
+                "password": "wrongpass"
+            })
+        assert response.status_code == 404
